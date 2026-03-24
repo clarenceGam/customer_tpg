@@ -8,7 +8,7 @@ import { barService } from '../services/barService';
 import { imageUrl } from '../utils/imageUrl';
 import { useView } from '../hooks/useView';
 import { VIEWS } from '../contexts/ViewContext';
-import { MapPin, Loader2, CheckCircle, Volume2, Star, Navigation, Ruler, Timer, ArrowRight } from 'lucide-react';
+import { MapPin, Loader2, CheckCircle, Volume2, Star, Navigation, Ruler, Timer, ArrowRight, Sparkles, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -47,6 +47,51 @@ const createUserLocationIcon = (heading = 0) => {
 };
 
 const NEAR_KM = 5;
+const DSS_MAX_KM = 20; // DSS considers bars within 20 km
+
+// Check if a bar is currently open based on its hours string
+function isBarOpenNow(bar) {
+  const now = new Date();
+  const dayKeys = ['sunday_hours','monday_hours','tuesday_hours','wednesday_hours','thursday_hours','friday_hours','saturday_hours'];
+  const hoursStr = bar[dayKeys[now.getDay()]];
+  if (!hoursStr) return false;
+  const normalized = String(hoursStr).replace(/\s+to\s+/gi, ' - ').trim();
+  const match = normalized.match(/(.+?)\s*-\s*(.+)/);
+  if (!match) return false;
+  const parseMin = (t) => {
+    const s = String(t).trim().toLowerCase();
+    const m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+    if (!m) return null;
+    let h = Number(m[1]); const mn = Number(m[2] || 0);
+    if (m[3]) { if (m[3]==='am'&&h===12) h=0; if (m[3]==='pm'&&h!==12) h+=12; }
+    return h*60+mn;
+  };
+  const start = parseMin(match[1]), end = parseMin(match[2]);
+  if (start === null || end === null) return false;
+  const cur = now.getHours()*60 + now.getMinutes();
+  return end > start ? (cur >= start && cur < end) : (cur >= start || cur < end);
+}
+
+// DSS scoring: distance (40) + rating (35) + review credibility (15) + open now (10)
+function scoreBars(bars, userLocation) {
+  if (!userLocation || !bars.length) return [];
+  const scored = bars.reduce((acc, bar) => {
+    const lat = Number(bar.latitude), lng = Number(bar.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return acc;
+    const km = haversineKm(userLocation.lat, userLocation.lng, lat, lng);
+    if (km > DSS_MAX_KM) return acc;
+    const distScore = Math.max(0, 40 * (1 - km / DSS_MAX_KM));
+    const rating = Number(bar.rating || 0);
+    const ratingScore = (rating / 5) * 35;
+    const reviews = Math.min(Number(bar.review_count || 0), 100);
+    const reviewScore = (reviews / 100) * 15;
+    const openBonus = isBarOpenNow(bar) ? 10 : 0;
+    const total = distScore + ratingScore + reviewScore + openBonus;
+    acc.push({ ...bar, _km: km, _score: total, _open: isBarOpenNow(bar) });
+    return acc;
+  }, []);
+  return scored.sort((a, b) => b._score - a._score).slice(0, 5);
+}
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -167,6 +212,7 @@ function MapView() {
   const [locLoading, setLocLoading] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [centerLoc, setCenterLoc] = useState(null);
+  const [dssOpen, setDssOpen] = useState(true);
   const defaultCenter = [14.5995, 120.9842];
 
   const nearbyCount = bars.reduce((count, bar) => {
@@ -176,6 +222,8 @@ function MapView() {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return count;
     return haversineKm(userLocation.lat, userLocation.lng, lat, lng) <= NEAR_KM ? count + 1 : count;
   }, 0);
+
+  const dssRecs = userLocation ? scoreBars(bars, userLocation) : [];
 
   useEffect(() => {
     barService.list({ has_coords: 1 })
@@ -310,10 +358,59 @@ function MapView() {
         {/* Error message */}
         {locErr && <div className="alert alert-warn" style={{ pointerEvents: 'auto' }}>{locErr}</div>}
 
-        {/* Nearby bars info */}
+        {/* DSS Recommendation Panel */}
         {userLocation && !navigatingTo && (
-          <div className="glass-card" style={{ padding: '0.6rem 0.9rem', fontSize: '0.8rem', pointerEvents: 'auto' }}>
-            <MapPin size={13} style={{ display: 'inline', marginRight: '0.3rem', verticalAlign: 'middle' }} /><strong>DSS Near You:</strong> {nearbyCount} bar{nearbyCount === 1 ? '' : 's'} within {NEAR_KM}km
+          <div className="glass-card" style={{ maxWidth: '360px', pointerEvents: 'auto', overflow: 'hidden' }}>
+            <button
+              onClick={() => setDssOpen(o => !o)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.9rem', background: 'none', border: 'none', cursor: 'pointer', color: '#fff' }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 700 }}>
+                <Sparkles size={14} style={{ color: '#fbbf24' }} />
+                DSS Recommendations
+                <span style={{ fontSize: '0.7rem', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', padding: '0.15rem 0.4rem', borderRadius: '999px', border: '1px solid rgba(251,191,36,0.3)' }}>
+                  {nearbyCount} nearby
+                </span>
+              </span>
+              {dssOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+
+            {dssOpen && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '0.5rem 0.75rem 0.75rem' }}>
+                {dssRecs.length === 0 ? (
+                  <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', margin: 0, padding: '0.25rem 0' }}>No bars found within {DSS_MAX_KM}km.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {dssRecs.map((rec, idx) => (
+                      <div key={rec.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.6rem', background: idx === 0 ? 'rgba(251,191,36,0.08)' : 'rgba(255,255,255,0.03)', borderRadius: '8px', border: `1px solid ${idx === 0 ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.07)'}` }}>
+                        <span style={{ minWidth: '18px', height: '18px', borderRadius: '50%', background: idx === 0 ? '#fbbf24' : 'rgba(255,255,255,0.15)', color: idx === 0 ? '#000' : '#fff', fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{idx + 1}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{rec.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                            <span style={{ fontSize: '0.68rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.15rem' }}><Star size={9} fill="#fbbf24" stroke="#fbbf24" />{Number(rec.rating||0).toFixed(1)}</span>
+                            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)' }}>{rec._km.toFixed(1)} km</span>
+                            {rec._open && <span style={{ fontSize: '0.62rem', color: '#4ade80', background: 'rgba(74,222,128,0.12)', padding: '0.1rem 0.35rem', borderRadius: '4px', border: '1px solid rgba(74,222,128,0.25)' }}>Open</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+                          <button
+                            style={{ fontSize: '0.65rem', padding: '0.3rem 0.5rem', background: 'rgba(232,0,30,0.15)', border: '1px solid rgba(232,0,30,0.3)', borderRadius: '5px', color: '#f87171', cursor: 'pointer', fontWeight: 600 }}
+                            onClick={() => navigate(VIEWS.BAR_DETAIL, { barId: rec.id })}
+                          >View</button>
+                          <button
+                            style={{ fontSize: '0.65rem', padding: '0.3rem 0.5rem', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '5px', color: '#93c5fd', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                            onClick={() => handleNav(rec)}
+                          ><Navigation size={9} />Go</button>
+                        </div>
+                      </div>
+                    ))}
+                    <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)', margin: '0.25rem 0 0', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <TrendingUp size={10} /> Ranked by distance · rating · availability
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
