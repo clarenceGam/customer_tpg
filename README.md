@@ -1,70 +1,101 @@
-# Getting Started with Create React App
+# Platform Bar - React Customer Website
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React + Vite customer-facing website connected to the existing Platform Bar System backend.
 
-## Available Scripts
+## Tech Stack
 
-In the project directory, you can run:
+- React (component-based)
+- Vite
+- Axios
+- React Router
+- JWT auth via `Authorization: Bearer <token>`
 
-### `npm start`
+## Customer-Only Access Rule
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Login is role-gated. If authenticated `user.role` is not `customer`, access is blocked with:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+> You do not have permission to use the customer website.
 
-### `npm test`
+Implemented in:
+- `src/services/authService.js`
+- `src/contexts/AuthContext.jsx`
+- `src/components/auth/ProtectedRoute.jsx`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Implemented Features
 
-### `npm run build`
+- Customer registration and login
+- Customer-only role guard
+- Home (trending bars + platform announcements)
+- Browse bars with filters and search
+- Bar detail page:
+  - follow/unfollow bar
+  - bar menu
+  - bar location map and directions
+  - events list + like events
+  - review list + submit/update/delete review
+  - reservation form + available tables checking
+- Events feed (cross-bar events + comments)
+- Reservation history + cancellation
+- Profile management (details, password, profile picture)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## API Modules
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Located in `src/api/`:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- `authApi.js`
+- `barApi.js`
+- `eventApi.js`
+- `reservationApi.js`
+- `reviewApi.js`
+- `socialApi.js`
+- `client.js` (Axios instance + JWT interceptor)
 
-### `npm run eject`
+## Project Structure
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```
+src/
+  api/
+  components/
+    auth/
+    bars/
+    events/
+    layout/
+    reservations/
+    reviews/
+    ui/
+  contexts/
+  hooks/
+  layouts/
+  pages/
+  services/
+  utils/
+  App.jsx
+  main.jsx
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Environment Variables
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Copy `.env.example` to `.env` and set backend base URL:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```
+VITE_API_URL=http://localhost:3000
+```
 
-## Learn More
+## Run the Project
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start dev server:
+   ```bash
+   npm run dev
+   ```
+3. Open the URL shown by Vite (usually `http://localhost:5173`).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Production Build
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+npm run build
+npm run preview
+```

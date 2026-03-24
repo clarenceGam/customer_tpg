@@ -2,38 +2,27 @@
   "name": "customer_website",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^13.5.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/sora": "^5.2.8",
+    "@react-oauth/google": "^0.13.4",
+    "axios": "^1.8.4",
+    "leaflet": "^1.9.4",
+    "leaflet-routing-machine": "^3.2.12",
+    "lucide-react": "^0.577.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.30.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.4.1",
+    "vite": "^6.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   }
 }
