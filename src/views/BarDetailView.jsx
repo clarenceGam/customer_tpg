@@ -874,11 +874,17 @@ function BarDetailView() {
         <section>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
             <CalendarDays size={28} style={{ color: 'var(--red)' }} />
-            <h2 className="text-h2" style={{ margin: 0 }}>Upcoming Events</h2>
+            <h2 className="text-h2" style={{ margin: 0 }}>All Events</h2>
+            <span className="badge-glass" style={{ marginLeft: 'auto' }}>{events.length} event{events.length !== 1 ? 's' : ''}</span>
           </div>
           <div className="g g-3">
-            {events.map((ev) => (
-              <div className="glass-card" key={ev.id} style={{ overflow: 'hidden', position: 'relative' }}>
+            {events.map((ev) => {
+              const isUpcoming = ev.event_date && new Date(ev.event_date + 'T23:59:59') >= new Date();
+              return (
+              <div className="glass-card" key={ev.id} style={{ overflow: 'hidden', position: 'relative', opacity: isUpcoming ? 1 : 0.72 }}>
+                {!isUpcoming && (
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 3, background: 'rgba(0,0,0,0.55)', padding: '0.3rem 0.75rem', fontSize: '0.7rem', fontWeight: 700, color: '#aaa', letterSpacing: '1px', textTransform: 'uppercase', textAlign: 'center' }}>Past Event</div>
+                )}
                 <div style={{ position: 'relative', overflow: 'hidden', height: '220px' }}>
                   <img 
                     src={imageUrl(ev.image_path) || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='220' viewBox='0 0 400 220'%3E%3Crect width='400' height='220' fill='%23161616'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='64' fill='%23333'%3E%F0%9F%8E%89%3C/text%3E%3C/svg%3E`} 
@@ -974,7 +980,8 @@ function BarDetailView() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </section>
         ) : (
@@ -989,6 +996,31 @@ function BarDetailView() {
       {/* About Tab */}
       {activeTab === 'about' && (
         <>
+          {/* Bar Description */}
+          {(bar.description || bar.category || bar.price_range) && (
+            <section className="glass-card glass-card-body">
+              <h3 className="text-h3 mb-md">About This Bar</h3>
+              {bar.description && (
+                <p className="text-body" style={{ lineHeight: 1.7, marginBottom: '1rem' }}>{bar.description}</p>
+              )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {bar.category && (
+                  <span className="badge-red">{bar.category}</span>
+                )}
+                {bar.price_range && (
+                  <span className="badge-glass">{bar.price_range}</span>
+                )}
+                {bar.city && (
+                  <span className="badge-glass" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <MapPin size={11} /> {bar.city}{bar.state ? `, ${bar.state}` : ''}
+                  </span>
+                )}
+                {bar.address && (
+                  <span className="badge-glass">{bar.address}</span>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* Hours + Contact */}
           <section className="g g-2">
