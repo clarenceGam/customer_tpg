@@ -24,7 +24,14 @@ export function fullName(user) {
 
 export function timeAgo(value) {
   if (!value) return '';
-  const diff = Math.floor((Date.now() - new Date(value).getTime()) / 1000);
+  let str = String(value);
+  // Bare MySQL datetime strings have no timezone marker — treat as UTC to avoid
+  // double-offset bug (Manila UTC+8 browser would add another 8h otherwise)
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(str) && !/Z|[+-]\d{2}:?\d{2}$/.test(str)) {
+    str = str.replace(' ', 'T') + 'Z';
+  }
+  const diff = Math.floor((Date.now() - new Date(str).getTime()) / 1000);
+  if (diff < 5) return 'just now';
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
