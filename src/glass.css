@@ -2343,7 +2343,7 @@ select.glass-input option { background: #1a0010; color: #fff; }
   .menu-cart-layout { grid-template-columns: 1fr; }
   .cart-sticky { position: static; max-height: none; }
   .nav-links { display: none; }
-  .mobile-toggle { display: block; }
+  .mobile-toggle { display: flex !important; }
   .nav-username { display: none; }
   .nav-logout { display: none; }
   .footer-grid { grid-template-columns: 1fr; }
@@ -2367,6 +2367,12 @@ select.glass-input option { background: #1a0010; color: #fff; }
   .trending-grid, .feature-grid { grid-template-columns: 1fr; }
   .hero-cta { flex-direction: column; align-items: center; }
   .search-bar { flex-direction: column; }
+  .phc-details { grid-template-columns: 1fr; }
+  .phc-header { flex-direction: column; align-items: flex-start; }
+  .phc-right { align-items: flex-start; }
+  .payment-card-top { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .payment-details { text-align: left; }
+  .res-header { flex-wrap: wrap; gap: 0.5rem; }
   .pay-options { grid-template-columns: 1fr; }
   .home-hero-title { font-size: 2rem; }
   .home-hero-cta { flex-direction: column; }
