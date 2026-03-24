@@ -23,15 +23,7 @@
   align-items: start;
 }
 
-@media (max-width: 1200px) {
-  .feed-layout-3col {
-    grid-template-columns: 1fr;
-  }
-  .feed-sidebar-left,
-  .feed-sidebar-right {
-    display: none;
-  }
-}
+/* Collapsed at 1200px — see bottom of file for the full responsive block */
 
 /* ── CENTER COLUMN ── */
 .feed-center-column {
@@ -386,6 +378,7 @@
 }
 
 /* ── RESPONSIVE ADJUSTMENTS ── */
+/* NOTE: 1400px rule MUST come before 1200px and 768px so it doesn't override them */
 @media (max-width: 1400px) {
   .feed-layout-3col {
     grid-template-columns: 200px 1fr 200px;
@@ -393,7 +386,26 @@
 }
 
 @media (max-width: 1200px) {
+  .feed-layout-3col {
+    grid-template-columns: 1fr;
+  }
+  .feed-sidebar-left,
+  .feed-sidebar-right {
+    display: none !important;
+  }
   .feed-page-container {
     padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .feed-page-container {
+    padding: 0.75rem;
+  }
+  .feed-page-header {
+    margin-bottom: 1.25rem;
+  }
+  .feed-center-column {
+    gap: 0.75rem;
   }
 }

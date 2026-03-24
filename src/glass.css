@@ -2361,6 +2361,22 @@ select.glass-input option { background: #1a0010; color: #fff; }
   .home-section { padding: 0 1rem; margin-top: 2rem; }
   .home-editorial-grid { grid-template-columns: 1fr; }
   .home-featured-card { min-height: 280px; }
+
+  /* Feed / tweet-post cards */
+  .tweet-post { max-width: 100%; }
+  .tweet-post-body { padding: 0.65rem 0.75rem; }
+  .tweet-post-header { flex-wrap: wrap; gap: 0.35rem; }
+  .tweet-post-venue { flex-wrap: wrap; gap: 0.35rem; }
+  .tweet-post-time { font-size: 0.65rem; }
+  .tweet-post-date { flex-wrap: wrap; gap: 0.25rem; font-size: 0.72rem; }
+  .tweet-post-title { font-size: 0.9rem; }
+  .tweet-post-img { max-height: 280px; }
+  .tweet-stats { font-size: 0.7rem; }
+  .tweet-action-btn { padding: 0.4rem 0.5rem; font-size: 0.75rem; gap: 0.25rem; }
+  .feed-tabs { max-width: 100%; }
+  .feed-tab { padding: 0.6rem 0.85rem; font-size: 0.8rem; }
+  .tweet-feed { max-width: 100%; }
+  .tweet-reply { margin-left: 1.5rem; }
 }
 
 @media (max-width: 480px) {
