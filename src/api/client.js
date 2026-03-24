@@ -24,10 +24,14 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+const SKIP_LOGOUT_URLS = ['/payments/', '/payment-check/'];
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof onUnauthorized === 'function') {
+    const url = error.config?.url || '';
+    const skipLogout = SKIP_LOGOUT_URLS.some((path) => url.includes(path));
+    if (error.response?.status === 401 && !skipLogout && typeof onUnauthorized === 'function') {
       onUnauthorized();
     }
     return Promise.reject(error);
