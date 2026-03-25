@@ -8,7 +8,7 @@ import { barService } from '../services/barService';
 import { imageUrl } from '../utils/imageUrl';
 import { useView } from '../hooks/useView';
 import { VIEWS } from '../contexts/ViewContext';
-import { MapPin, Loader2, CheckCircle, Volume2, Star, Navigation, Ruler, Timer, ArrowRight, Sparkles, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import { MapPin, Loader2, CheckCircle, Volume2, Star, Navigation, Ruler, Timer, ArrowRight, Sparkles, ChevronDown, ChevronUp, TrendingUp, Compass } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -213,6 +213,7 @@ function MapView() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [centerLoc, setCenterLoc] = useState(null);
   const [dssOpen, setDssOpen] = useState(true);
+  const [compassActive, setCompassActive] = useState(false);
   const defaultCenter = [14.5995, 120.9842];
 
   const nearbyCount = bars.reduce((count, bar) => {
@@ -231,7 +232,7 @@ function MapView() {
   }, []);
 
   
-  // Auto-request location on mount and recenter map + watch heading
+  // Auto-request location on mount
   useEffect(() => {
     if (!navigator.geolocation) return;
     setLocLoading(true);
@@ -240,30 +241,55 @@ function MapView() {
         const loc = { lat: p.coords.latitude, lng: p.coords.longitude };
         setUserLocation(loc);
         setCenterLoc({ lat: loc.lat, lng: loc.lng, zoom: 14 });
-        if (p.coords.heading !== null && !isNaN(p.coords.heading)) {
-          setUserHeading(p.coords.heading);
-        }
         setLocLoading(false);
       },
       () => { setLocLoading(false); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-
-    // Watch heading changes for direction indicator
-    const watchId = navigator.geolocation.watchPosition(
-      (p) => {
-        if (p.coords.heading !== null && !isNaN(p.coords.heading)) {
-          setUserHeading(p.coords.heading);
-        }
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 1000 }
-    );
-
-    return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-    };
   }, []);
+
+  // Device orientation compass — works on both iOS and Android
+  // iOS 13+ requires explicit permission from a user gesture (handled by the Compass button)
+  // Android attaches automatically
+  const handleOrientation = useCallback((e) => {
+    let heading = null;
+    if (e.webkitCompassHeading != null && !isNaN(e.webkitCompassHeading)) {
+      // iOS: webkitCompassHeading is 0=North, clockwise — use directly
+      heading = e.webkitCompassHeading;
+    } else if (e.alpha != null && !isNaN(e.alpha)) {
+      // Android: alpha is counterclockwise from North when flat
+      heading = (360 - e.alpha) % 360;
+    }
+    if (heading !== null) setUserHeading(heading);
+  }, []);
+
+  const enableCompass = useCallback(async () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS 13+ — must be called from a user gesture
+      try {
+        const perm = await DeviceOrientationEvent.requestPermission();
+        if (perm === 'granted') {
+          window.addEventListener('deviceorientation', handleOrientation, true);
+          setCompassActive(true);
+        }
+      } catch (_) {}
+    } else {
+      // Android / desktop — no permission needed
+      window.addEventListener('deviceorientation', handleOrientation, true);
+      setCompassActive(true);
+    }
+  }, [handleOrientation]);
+
+  // On Android, try to auto-attach on mount (no permission dialog needed)
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (!isIOS && typeof DeviceOrientationEvent !== 'undefined') {
+      window.addEventListener('deviceorientation', handleOrientation, true);
+      setCompassActive(true);
+    }
+    return () => window.removeEventListener('deviceorientation', handleOrientation, true);
+  }, [handleOrientation]);
 
   const getLocation = useCallback((onSuccess) => {
     setLocErr(''); setLocLoading(true);
@@ -348,6 +374,15 @@ function MapView() {
               {locLoading ? <><Loader2 size={14} className="animate-spin" />Locating...</> : <><MapPin size={14} />My Location</>}
             </button>
             {userLocation && <span className="badge-success" style={{ fontSize: '0.7rem', padding: '0.35rem 0.6rem' }}><CheckCircle size={12} /> Located</span>}
+            <button
+              className="btn btn-sm"
+              onClick={enableCompass}
+              title={compassActive ? 'Compass active' : 'Enable compass arrow'}
+              style={{ background: compassActive ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.1)', border: `1px solid ${compassActive ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.2)'}`, color: compassActive ? '#4ade80' : '#fff', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', padding: '0.35rem 0.6rem', borderRadius: '6px', cursor: 'pointer' }}
+            >
+              <Compass size={13} style={{ animation: compassActive ? 'none' : undefined }} />
+              {compassActive ? 'Compass On' : 'Compass'}
+            </button>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#fff', cursor: 'pointer', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', padding: '0.35rem 0.6rem', borderRadius: '6px' }}>
               <input type="checkbox" checked={voiceEnabled} onChange={e => setVoiceEnabled(e.target.checked)} style={{ margin: 0 }} />
               <Volume2 size={12} />Voice
