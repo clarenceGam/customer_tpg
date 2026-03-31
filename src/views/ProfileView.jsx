@@ -107,7 +107,7 @@ function ProfileView() {
   const handleProfileSave = async (e) => {
     e.preventDefault(); setErr(''); setMsg('');
     try {
-      const { date_of_birth, email, ...editableFields } = profileForm;
+      const { email, ...editableFields } = profileForm;
       await updateProfile(editableFields);
       setMsg('Profile updated successfully.');
     } catch (e) { setErr(e?.response?.data?.message || 'Failed to update profile.'); }
@@ -193,8 +193,8 @@ function ProfileView() {
               className="glass-input"
               type="date"
               value={profileForm.date_of_birth || ''}
-              readOnly
-              style={{ opacity: 0.5, cursor: 'not-allowed' }}
+              onChange={e => pv('date_of_birth', e.target.value)}
+              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
             />
           </div>
           <button className="btn btn-red" type="submit">Save Profile</button>
