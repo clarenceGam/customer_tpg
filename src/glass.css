@@ -3300,7 +3300,7 @@ select.glass-input option { background: #1a0010; color: #fff; }
   overflow: hidden;
   background: 
     linear-gradient(to bottom, rgba(10,10,10,0.3) 0%, rgba(10,10,10,0.8) 60%, rgba(10,10,10,0.95) 100%),
-    url("/bg.png");
+    url("./bg-home.jpg");
   background-size: cover;
   background-position: center;
 }

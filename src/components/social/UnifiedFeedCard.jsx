@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { imageUrl } from '../../utils/imageUrl';
 
 function UnifiedFeedCard({ item, onLike, onComment }) {
   const [showComments, setShowComments] = useState(false);
@@ -12,7 +13,7 @@ function UnifiedFeedCard({ item, onLike, onComment }) {
       <div className="feed-card-header">
         <div className="feed-bar-info">
           {item.bar_logo && (
-            <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${item.bar_logo}`} alt={item.bar_name} className="feed-bar-logo" />
+            <img src={imageUrl(item.bar_logo)} alt={item.bar_name} className="feed-bar-logo" />
           )}
           <div>
             <h3 className="feed-bar-name">{item.bar_name}</h3>
@@ -49,7 +50,7 @@ function UnifiedFeedCard({ item, onLike, onComment }) {
 
         {displayImage && (
           <img 
-            src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${displayImage}`} 
+            src={imageUrl(displayImage)} 
             alt={isEvent ? item.title : 'Post'} 
             className="feed-image" 
           />

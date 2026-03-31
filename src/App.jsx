@@ -277,7 +277,7 @@ function GlassNav({ onOpenNotif, unread, onToggleSidebar, sidebarOpen }) {
             </button>
           )}
           <div className="brand" onClick={() => go(isAuthenticated ? VIEWS.HOME : VIEWS.LANDING)}>
-            <img src="/logo.png" alt="Logo" className="brand-logo" onError={(e) => { e.target.style.display = 'none'; }} />
+            <img src="/logo192.png" alt="Logo" className="brand-logo" onError={(e) => { e.target.style.display = 'none'; }} />
             <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: '0.82rem', letterSpacing: '1.5px', textTransform: 'uppercase' }}>THE PARTY<span className="brand-accent"> GOERS</span></span>
           </div>
         </div>

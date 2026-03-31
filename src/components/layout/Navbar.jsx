@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { socialService } from '../../services/socialService';
+import { imageUrl } from '../../utils/imageUrl';
 import '../../styles/enhancements.css';
 
 const navItems = [
@@ -78,7 +79,7 @@ function Navbar() {
             <div className="user-profile-info">
               {user?.profile_picture ? (
                 <img
-                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${user.profile_picture}`}
+                  src={imageUrl(user.profile_picture)}
                   alt={user.first_name}
                   className="user-avatar"
                 />
@@ -129,7 +130,7 @@ function Navbar() {
         <div className="mobile-nav-user">
           {user?.profile_picture ? (
             <img
-              src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${user.profile_picture}`}
+              src={imageUrl(user.profile_picture)}
               alt={user.first_name}
               className="user-avatar"
             />

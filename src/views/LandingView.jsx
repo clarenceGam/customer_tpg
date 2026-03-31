@@ -3,6 +3,7 @@ import { useView } from '../hooks/useView';
 import { VIEWS } from '../contexts/ViewContext';
 import { barService } from '../services/barService';
 import { imageUrl } from '../utils/imageUrl';
+import bgHome from '../bg-home.jpg';
 import { Wine, CalendarCheck, Sparkles, Heart, MapPin, Zap, CheckCircle, ArrowRight, Star, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 function LandingView() {
@@ -13,9 +14,9 @@ function LandingView() {
 
   // Background images for slideshow
   const heroImages = [
-    '/bg.png',
-    '/bar2.jpg', // Add more images as needed
-    '/bg3.png',
+    bgHome,
+    bgHome,
+    bgHome,
   ];
 
   useEffect(() => {
@@ -331,7 +332,7 @@ function LandingView() {
         <div className="container">
           <div className="footer-grid">
             <div className="footer-col">
-              <img src="/logo.png" alt="Logo" className="footer-logo" onError={(e) => { e.target.style.display = 'none'; }} />
+              <img src="/logo192.png" alt="Logo" className="footer-logo" onError={(e) => { e.target.style.display = 'none'; }} />
               <p>Your ultimate guide to the Philippine bar and nightlife scene.</p>
             </div>
             <div className="footer-col">

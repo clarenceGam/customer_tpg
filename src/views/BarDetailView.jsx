@@ -1035,7 +1035,7 @@ function BarDetailView() {
                         >
                       {t.image_path ? (
                         <img 
-                          src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${t.image_path}`}
+                          src={imageUrl(t.image_path)}
                           alt={`Table ${t.table_number}`}
                           className="table-image"
                           style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.5rem' }}
