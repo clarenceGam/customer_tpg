@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { imageUrl } from '../../utils/imageUrl';
+import { getPrimaryBarType } from '../../utils/barTypeLabel';
 
 const BAR_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='420' viewBox='0 0 720 420'%3E%3Crect width='720' height='420' fill='%23161616'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='72' fill='%23333'%3E%F0%9F%8D%B8%3C/text%3E%3C/svg%3E`;
 
@@ -9,6 +10,7 @@ function BarCard({ bar }) {
   const hasGif = Boolean(bar.video_path || bar.bar_gif);
   const staticSrc = imageUrl(bar.image_path) || BAR_PLACEHOLDER;
   const gifSrc = hasGif ? imageUrl(bar.video_path || bar.bar_gif) : null;
+  const primaryBarType = getPrimaryBarType(bar);
 
   // Debug logging - log ALL bars to see what data we're getting
   console.log('BarCard Data:', {
@@ -55,7 +57,7 @@ function BarCard({ bar }) {
         )}
       </div>
       <div className="bar-content">
-        <p className="badge">{bar.category || 'Bar'}</p>
+        <p className="badge">{primaryBarType}</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
           <div
             style={{

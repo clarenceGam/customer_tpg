@@ -3,6 +3,7 @@ import { useView } from '../hooks/useView';
 import { VIEWS } from '../contexts/ViewContext';
 import { barService } from '../services/barService';
 import { imageUrl } from '../utils/imageUrl';
+import { getPrimaryBarType } from '../utils/barTypeLabel';
 import bgHome from '../bg-home.jpg';
 import { Wine, CalendarCheck, Sparkles, Heart, MapPin, Zap, CheckCircle, ArrowRight, Star, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -266,7 +267,9 @@ function LandingView() {
             </div>
           </div>
           <div className="ts-accordion">
-            {trending.map((bar, i) => (
+            {trending.map((bar, i) => {
+              const primaryBarType = getPrimaryBarType(bar);
+              return (
               <div className="ts-acc-card" key={bar.id} onClick={() => navigate(VIEWS.LOGIN)}>
                 <img
                   src={imageUrl(bar.image_path) || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='500' viewBox='0 0 600 500'%3E%3Crect width='600' height='500' fill='%23161616'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='52' fill='%23333'%3E%F0%9F%8D%B8%3C/text%3E%3C/svg%3E`}
@@ -292,13 +295,14 @@ function LandingView() {
                     )}
                     <h3 className="ts-acc-name">{bar.name}</h3>
                   </div>
-                  <p className="ts-acc-sub">{bar.category || 'Nightlife'}</p>
+                  <p className="ts-acc-sub">{primaryBarType}</p>
                   <button className="ts-acc-explore" onClick={(e) => { e.stopPropagation(); navigate(VIEWS.LOGIN); }}>
                     EXPLORE
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

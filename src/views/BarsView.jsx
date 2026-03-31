@@ -3,6 +3,7 @@ import { useView } from '../hooks/useView';
 import { VIEWS } from '../contexts/ViewContext';
 import { useBars } from '../hooks/useBars';
 import { imageUrl } from '../utils/imageUrl';
+import { getBarTypes, getPrimaryBarType } from '../utils/barTypeLabel';
 import { Search, MapPin, Star, ArrowRight, SlidersHorizontal } from 'lucide-react';
 
 const BAR_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='220' viewBox='0 0 400 220'%3E%3Crect width='400' height='220' fill='%23161616'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='%23333333'%3E%F0%9F%8D%B8%3C/text%3E%3C/svg%3E`;
@@ -69,6 +70,7 @@ function BarsView() {
   const [searchResults, setSearchResults] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [categoryInput, setCategoryInput] = useState(params.category || '');
+  const [selectedBarTypes, setSelectedBarTypes] = useState([]);
 
   const filterBarsByQuery = (items, query) => {
     const q = String(query || '').trim().toLowerCase();
@@ -131,7 +133,16 @@ function BarsView() {
     setSearchResults(filterBarsByQuery(bars, q));
   }, [bars]);
 
-  const list = Array.isArray(searchResults) ? searchResults : bars;
+  // Filter by bar types
+  const filterByBarTypes = (items) => {
+    if (selectedBarTypes.length === 0) return items;
+    return items.filter(bar => {
+      const barTypes = getBarTypes(bar);
+      return selectedBarTypes.some(selectedType => barTypes.includes(selectedType));
+    });
+  };
+
+  const displayedBars = filterByBarTypes(searchResults !== null ? searchResults : bars);
 
   return (
     <div className="flex flex-col gap-xl">
@@ -165,8 +176,43 @@ function BarsView() {
           </button>
         </form>
 
-        {!loading && list.length > 0 && (
-          <p className="text-muted mt-md" style={{ fontSize: '0.82rem' }}>Showing <strong style={{ color: '#fff' }}>{list.length}</strong> bar{list.length !== 1 ? 's' : ''}{params.category ? ` in ${params.category}` : ''}</p>
+        {/* Bar Type Filters */}
+        <div className="flex gap-sm mt-md" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="text-sm font-semibold" style={{ color: '#888' }}>Bar Type:</span>
+          {['All', 'Club', 'Restobar', 'Comedy Bar', 'KTV', 'Bar'].map((type) => {
+            const isSelected = type === 'All' ? selectedBarTypes.length === 0 : selectedBarTypes.includes(type);
+            const handleClick = () => {
+              if (type === 'All') {
+                setSelectedBarTypes([]);
+              } else {
+                setSelectedBarTypes(prev => 
+                  prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+                );
+              }
+            };
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={handleClick}
+                className="btn btn-sm"
+                style={{
+                  background: isSelected ? 'rgba(204,0,0,0.15)' : 'rgba(255,255,255,0.05)',
+                  border: isSelected ? '1px solid rgba(204,0,0,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                  color: isSelected ? '#fff' : '#888',
+                  fontWeight: isSelected ? 600 : 400,
+                  fontSize: '0.8rem',
+                  padding: '0.4rem 0.8rem'
+                }}
+              >
+                {type}
+              </button>
+            );
+          })}
+        </div>
+
+        {!loading && displayedBars.length > 0 && (
+          <p className="text-muted mt-md" style={{ fontSize: '0.82rem' }}>Showing <strong style={{ color: '#fff' }}>{displayedBars.length}</strong> bar{displayedBars.length !== 1 ? 's' : ''}{params.category ? ` in ${params.category}` : ''}</p>
         )}
       </section>
 
@@ -175,12 +221,13 @@ function BarsView() {
       {error && <p className="error-text">{error}</p>}
 
       {!loading && (
-        list.length ? (
+        displayedBars.length ? (
           <div className="bars-grid">
-            {list.map((bar) => {
+            {displayedBars.map((bar) => {
               const lat = Number(bar.latitude);
               const lng = Number(bar.longitude);
               const logoSrc = imageUrl(bar.logo_path || bar.bar_icon || bar.image_path);
+              const primaryBarType = getPrimaryBarType(bar);
               const isNear =
                 Number.isFinite(lat) &&
                 Number.isFinite(lng) &&
@@ -196,7 +243,7 @@ function BarsView() {
                   <BarCardImage bar={bar} />
                   <div className="bcard-scrim" />
                   <div className="bcard-badges">
-                    <span className="bcard-pill">{bar.category || 'Bar'}</span>
+                    <span className="bcard-pill">{primaryBarType}</span>
                     {isNear && <span className="badge-success" style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem' }}><MapPin size={10} /> Near</span>}
                   </div>
                   <div className="bcard-info">

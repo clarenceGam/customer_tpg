@@ -6,6 +6,7 @@ import { reservationService } from '../services/reservationService';
 import { paymentService } from '../services/paymentService';
 import { statsService } from '../services/statsService';
 import { imageUrl } from '../utils/imageUrl';
+import { getPrimaryBarType } from '../utils/barTypeLabel';
 import { formatDate, formatTime } from '../utils/dateHelpers';
 import { Wine, CalendarDays, CreditCard, PartyPopper, MapPin, ArrowRight, Star, Heart, MessageCircle } from 'lucide-react';
 
@@ -155,47 +156,53 @@ function HomeView() {
         ) : (
           <div className="home-editorial">
             {/* Featured large card */}
-            <div className="home-featured-card" onClick={() => navigate(VIEWS.BAR_DETAIL, { barId: trending[0].id })}>
-              <img
-                src={imageUrl(trending[0].image_path) || BAR_PLACEHOLDER}
-                alt={trending[0].name}
-                className="home-featured-img"
-                onError={e => { e.target.src = BAR_PLACEHOLDER; }}
-              />
-              <div className="home-featured-scrim" />
-              <div className="home-featured-info">
-                <span className="badge-glass" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)' }}>{trending[0].category || 'Bar'}</span>
-                <h3 className="home-featured-name">
-                  {trending[0].logo_path && (
-                    <img 
-                      src={imageUrl(trending[0].logo_path)} 
-                      alt="" 
-                      style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                  )}
-                  {trending[0].name}
-                </h3>
-                <p className="home-featured-meta">{trending[0].city} · {trending[0].price_range || '$$'}</p>
-                <p className="home-featured-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Star size={13} /> {trending[0].rating || '0.0'} · {trending[0].follower_count || 0} followers</p>
-                <button className="btn btn-red btn-sm" style={{ marginTop: '0.75rem' }} onClick={(e) => { e.stopPropagation(); navigate(VIEWS.BAR_DETAIL, { barId: trending[0].id }); }}>
-                  View Details <ArrowRight size={14} />
-                </button>
-              </div>
-            </div>
+            {(() => {
+              const featuredBarType = getPrimaryBarType(trending[0]);
+              return (
+                <div className="home-featured-card" onClick={() => navigate(VIEWS.BAR_DETAIL, { barId: trending[0].id })}>
+                  <img
+                    src={imageUrl(trending[0].image_path) || BAR_PLACEHOLDER}
+                    alt={trending[0].name}
+                    className="home-featured-img"
+                    onError={e => { e.target.src = BAR_PLACEHOLDER; }}
+                  />
+                  <div className="home-featured-scrim" />
+                  <div className="home-featured-info">
+                    <span className="badge-glass" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)' }}>{featuredBarType}</span>
+                    <h3 className="home-featured-name">
+                      {trending[0].logo_path && (
+                        <img 
+                          src={imageUrl(trending[0].logo_path)} 
+                          alt="" 
+                          style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      )}
+                      {trending[0].name}
+                    </h3>
+                    <p className="home-featured-meta">{trending[0].city} · {trending[0].price_range || '$$'}</p>
+                    <p className="home-featured-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Star size={13} /> {trending[0].rating || '0.0'} · {trending[0].follower_count || 0} followers</p>
+                    <button className="btn btn-red btn-sm" style={{ marginTop: '0.75rem' }} onClick={(e) => { e.stopPropagation(); navigate(VIEWS.BAR_DETAIL, { barId: trending[0].id }); }}>
+                      View Details <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
             {/* Smaller cards */}
             <div className="home-editorial-grid">
               {trending.slice(1).map((bar) => {
                 const lat = parseFloat(bar.latitude);
                 const lng = parseFloat(bar.longitude);
                 const isNear = Boolean(userLoc && Number.isFinite(lat) && Number.isFinite(lng) && haversineKm(userLoc.lat, userLoc.lng, lat, lng) <= NEAR_KM);
+                const primaryBarType = getPrimaryBarType(bar);
                 return (
                   <div className="home-bar-card" key={bar.id} onClick={() => navigate(VIEWS.BAR_DETAIL, { barId: bar.id })}>
                     <div className="home-bar-card-img-wrap">
                       <img src={imageUrl(bar.image_path) || BAR_PLACEHOLDER} alt={bar.name} className="home-bar-card-img" onError={e => { e.target.src = BAR_PLACEHOLDER; }} />
                       <div className="home-bar-card-scrim" />
                       <div className="home-bar-card-overlay">
-                        <span className="badge-glass" style={{ fontSize: '0.62rem', padding: '0.15rem 0.5rem', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.08)' }}>{bar.category || 'Bar'}</span>
+                        <span className="badge-glass" style={{ fontSize: '0.62rem', padding: '0.15rem 0.5rem', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.08)' }}>{primaryBarType}</span>
                         {isNear && <span className="badge-success" style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem' }}><MapPin size={10} /> Near</span>}
                       </div>
                     </div>

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { barService } from '../services/barService';
 import { socialService } from '../services/socialService';
 import { imageUrl } from '../utils/imageUrl';
+import { getPrimaryBarType } from '../utils/barTypeLabel';
 
 function PublicExplorePage() {
   const [searchParams] = useSearchParams();
@@ -113,33 +114,36 @@ function PublicExplorePage() {
           </div>
         ) : (
           <div className="explore-grid">
-            {bars.map((bar) => (
-              <article className="explore-card card" key={bar.id} id={`bar-${bar.id}`}>
-                <img
-                  className="explore-image"
-                  src={imageUrl(bar.image_path) || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='420' viewBox='0 0 720 420'%3E%3Crect width='720' height='420' fill='%23161616'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='72' fill='%23333'%3E%F0%9F%8D%B8%3C/text%3E%3C/svg%3E`}
-                  alt={bar.name}
-                />
-                <div className="explore-content">
-                  <span className="badge">{bar.category || 'Bar'}</span>
-                  <h3>{bar.name}</h3>
-                  <p className="section-subtitle">
-                    {bar.city} · {bar.price_range || '$$'}
-                  </p>
-                  <p>{bar.description || 'Discover this bar and upcoming events.'}</p>
-                  <div className="bar-meta">
-                    <span>⭐ {bar.rating || '0.0'} ({bar.review_count || 0})</span>
-                    <span>{bar.follower_count || 0} followers</span>
+            {bars.map((bar) => {
+              const primaryBarType = getPrimaryBarType(bar);
+              return (
+                <article className="explore-card card" key={bar.id} id={`bar-${bar.id}`}>
+                  <img
+                    className="explore-image"
+                    src={imageUrl(bar.image_path) || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='420' viewBox='0 0 720 420'%3E%3Crect width='720' height='420' fill='%23161616'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='72' fill='%23333'%3E%F0%9F%8D%B8%3C/text%3E%3C/svg%3E`}
+                    alt={bar.name}
+                  />
+                  <div className="explore-content">
+                    <span className="badge">{primaryBarType}</span>
+                    <h3>{bar.name}</h3>
+                    <p className="section-subtitle">
+                      {bar.city} · {bar.price_range || '$$'}
+                    </p>
+                    <p>{bar.description || 'Discover this bar and upcoming events.'}</p>
+                    <div className="bar-meta">
+                      <span>⭐ {bar.rating || '0.0'} ({bar.review_count || 0})</span>
+                      <span>{bar.follower_count || 0} followers</span>
+                    </div>
+                    <p className="section-subtitle" style={{ marginTop: '0.5rem' }}>
+                      Sign in to view full details, reserve tables, and follow this bar.
+                    </p>
+                    <Link to="/login" className="button">
+                      Login to View Details
+                    </Link>
                   </div>
-                  <p className="section-subtitle" style={{ marginTop: '0.5rem' }}>
-                    Sign in to view full details, reserve tables, and follow this bar.
-                  </p>
-                  <Link to="/login" className="button">
-                    Login to View Details
-                  </Link>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
