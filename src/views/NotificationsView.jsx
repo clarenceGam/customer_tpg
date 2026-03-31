@@ -3,6 +3,30 @@ import { socialService } from '../services/socialService';
 import { formatDate } from '../utils/dateHelpers';
 import { Bell, CalendarDays, CreditCard, PartyPopper, Star, Heart, MessageCircle } from 'lucide-react';
 
+function getNotificationMessage(notification) {
+  const type = String(notification.type || '').toLowerCase();
+  const reservationStatus = String(notification.reservation_status || '').toLowerCase();
+  const reservationPaymentStatus = String(notification.reservation_payment_status || '').toLowerCase();
+
+  if (type === 'reservation_confirmed') {
+    const baseMessage = String(notification.message || '').replace(/has been submitted and is pending approval\.?/i, 'is confirmed.');
+
+    if (reservationPaymentStatus === 'partial') {
+      return baseMessage.replace(/is confirmed\.?/i, 'is confirmed. Payment status: Partially Paid.');
+    }
+
+    if (reservationPaymentStatus === 'paid') {
+      return baseMessage.replace(/is confirmed\.?/i, 'is confirmed. Payment status: Paid.');
+    }
+
+    if (reservationStatus === 'confirmed') {
+      return baseMessage.replace(/submitted and is pending approval\.?/i, 'is confirmed.');
+    }
+  }
+
+  return notification.message || '';
+}
+
 function NotificationsView() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +132,7 @@ function NotificationsView() {
               <div className="notif-icon">{getIcon(n.type)}</div>
               <div className="notif-content">
                 <div className="notif-title">{n.title || 'Notification'}</div>
-                <div className="notif-msg">{n.message || ''}</div>
+                <div className="notif-msg">{getNotificationMessage(n)}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div className="notif-time">{n.time_ago || formatDate(n.created_at)}</div>
                   {!n.is_read && <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#ef4444', background: 'rgba(239,68,68,0.1)', padding: '0.1rem 0.4rem', borderRadius: '6px' }}>NEW</span>}

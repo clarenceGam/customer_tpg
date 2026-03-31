@@ -20,6 +20,11 @@ function asMoney(value) {
 }
 
 function buildBookingReceiptData(reservation, customerName) {
+  const paymentStatus = (reservation.payment_status || '').toLowerCase();
+  const reservationStatus = (reservation.status || '').toLowerCase();
+  const paidAmount = Number(reservation.payment_amount || reservation.deposit_amount || 0);
+  const remainingBalance = Math.max(0, Number(reservation.remaining_balance || 0));
+
   return {
     title: 'Booking Confirmation Receipt',
     transactionNumber: reservation.transaction_number || reservation.reference_id || `RES-${reservation.id}`,
@@ -29,8 +34,13 @@ function buildBookingReceiptData(reservation, customerName) {
     tableNumber: reservation.table_number || reservation.table_id || '-',
     reservationDateTime: `${formatDate(reservation.reservation_date)} ${formatTime(reservation.reservation_time)}`,
     guestCount: reservation.party_size || '-',
-    downPaymentAmount: asMoney(reservation.payment_amount || reservation.deposit_amount || 0),
-    reservationStatus: (reservation.status || '-').toUpperCase(),
+    amountPaid: asMoney(paidAmount),
+    remainingBalance: asMoney(remainingBalance),
+    reservationStatus:
+      paymentStatus === 'partial' ? 'PARTIALLY PAID' :
+      paymentStatus === 'paid' ? 'PAID' :
+      reservationStatus === 'confirmed' ? 'CONFIRMED' :
+      (reservation.status || '-').toUpperCase(),
     generatedAt: new Date().toLocaleString(),
   };
 }
@@ -98,8 +108,11 @@ function downloadReceiptPdf(receipt) {
     `Table Number: ${String(receipt.tableNumber)}`,
     `Reservation Date & Time: ${receipt.reservationDateTime}`,
     `Number of Guests: ${String(receipt.guestCount)}`,
-    `Down Payment Amount Paid: ${receipt.downPaymentAmount}`,
+    `Amount Paid: ${receipt.amountPaid}`,
     `Reservation Status: ${receipt.reservationStatus}`,
+    ...(receipt.remainingBalance && receipt.remainingBalance !== asMoney(0)
+      ? [`Remaining Balance to be Paid: ${receipt.remainingBalance}`]
+      : []),
     '',
     'This is a system-generated booking receipt.',
   ];
