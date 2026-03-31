@@ -4,6 +4,7 @@ import { VIEWS } from '../contexts/ViewContext';
 import { barService } from '../services/barService';
 import { reservationService } from '../services/reservationService';
 import { paymentService } from '../services/paymentService';
+import { statsService } from '../services/statsService';
 import { imageUrl } from '../utils/imageUrl';
 import { formatDate, formatTime } from '../utils/dateHelpers';
 import { Wine, CalendarDays, CreditCard, PartyPopper, MapPin, ArrowRight, Star, Heart, MessageCircle } from 'lucide-react';
@@ -49,8 +50,12 @@ function HomeView() {
   const { navigate } = useView();
   const [trending, setTrending] = useState([]);
   const [latestEvents, setLatestEvents] = useState([]);
-  const [reservationCount, setReservationCount] = useState(0);
-  const [paymentCount, setPaymentCount] = useState(0);
+  const [platformStats, setPlatformStats] = useState({
+    active_bars: 0,
+    featured_events: 0,
+    reservations_this_month: 0,
+    total_customers: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [userLoc, setUserLoc] = useState(null);
 
@@ -67,16 +72,14 @@ function HomeView() {
   useEffect(() => {
     async function load() {
       try {
-        const [t, reservations, payments, bars] = await Promise.all([
+        const [t, stats, bars] = await Promise.all([
           barService.trending(6),
-          reservationService.myReservations(),
-          paymentService.myHistory(),
+          statsService.getPlatformStats(),
           barService.list({ limit: 12 }),
         ]);
 
         setTrending(t);
-        setReservationCount(Array.isArray(reservations) ? reservations.length : 0);
-        setPaymentCount(Array.isArray(payments) ? payments.length : 0);
+        setPlatformStats(stats);
 
         const eventLists = await Promise.all(
           bars.slice(0, 6).map(bar => barService.events(bar.id).then(ev => ev.map(e => ({ ...e, bar_name: bar.name }))).catch(() => []))
@@ -121,10 +124,10 @@ function HomeView() {
       {/* ── STAT ROW — Large Number Counters ── */}
       <section className="home-stats animate-in">
         {[
-          { value: trending.length, label: 'Trending Bars', view: VIEWS.BARS },
-          { value: reservationCount, label: 'My Reservations', view: VIEWS.RESERVATIONS },
-          { value: paymentCount, label: 'Payments', view: VIEWS.PAYMENTS },
-          { value: latestEvents.length, label: 'Events', view: VIEWS.EVENTS },
+          { value: platformStats.active_bars, label: "Tonight's Bars", sublabel: 'Active tonight', view: VIEWS.BARS },
+          { value: platformStats.featured_events, label: 'Featured Events', sublabel: 'This week', view: VIEWS.EVENTS },
+          { value: `${platformStats.reservations_this_month}+`, label: 'Reservations', sublabel: 'This month', view: VIEWS.BARS },
+          { value: platformStats.total_customers >= 1000 ? `${(platformStats.total_customers / 1000).toFixed(1)}K` : platformStats.total_customers, label: 'Happy Customers', sublabel: 'And growing', view: VIEWS.BARS },
         ].map((s, i) => (
           <div className="home-stat" key={i} onClick={() => navigate(s.view)}>
             <span className="home-stat-num">{s.value}</span>

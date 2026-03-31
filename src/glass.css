@@ -1821,7 +1821,7 @@ select.glass-input option { background: #1a0010; color: #fff; }
   padding: 5rem 2rem 4rem;
   overflow: hidden;
   background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)), 
-              url('./dist/bg-home.jpg') center/cover no-repeat;
+              url('bg-home.jpg') center/cover no-repeat;
 }
 .home-hero-glow {
   position: absolute;

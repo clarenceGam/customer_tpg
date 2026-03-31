@@ -5,4 +5,5 @@ export const reservationApi = {
   myReservations: () => apiClient.get('/reservations/my'),
   cancel: (reservationId) => apiClient.patch(`/reservations/${reservationId}/cancel`),
   recheckPayment: (reservationId) => apiClient.post(`/reservations/${reservationId}/recheck-payment`),
+  checkIn: (reservationId) => apiClient.post(`/reservations/${reservationId}/check-in`),
 };

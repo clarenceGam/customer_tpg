@@ -287,6 +287,7 @@ function BarDetailView() {
     if (!acceptOnline && !acceptGcash) { setErr('This bar does not accept online payments at this time.'); return; }
     setCheckingOut(true); setErr(''); setMsg('');
     try {
+      const downPayment = Number((grandTotal * 0.5).toFixed(2));
       const orderNote = cartItems.length > 0
         ? `Order: ${cartItems.map(i => `${i.name} x${i.qty}`).join(', ')}`
         : '';
@@ -310,7 +311,7 @@ function BarDetailView() {
       const pay = await paymentService.createPayment({
         payment_type: 'reservation',
         related_id: resId,
-        amount: grandTotal,
+        amount: downPayment,
         payment_method: paymentMethod,
         bar_id: Number(barId),
         success_url: `${baseUrl}/payment/success?ref={REFERENCE_ID}`,
@@ -337,8 +338,14 @@ function BarDetailView() {
 
   const handleLikeEvent = async (ev) => {
     try {
-      const r = await eventService.like(ev.id);
-      setEvents(p => p.map(i => i.id === ev.id ? { ...i, like_count: r.likeCount ?? i.like_count + 1 } : i));
+      const isLiked = ev.user_liked;
+      if (isLiked) {
+        const r = await eventService.unlike(ev.id);
+        setEvents(p => p.map(i => i.id === ev.id ? { ...i, like_count: r.likeCount ?? Math.max(0, i.like_count - 1), user_liked: false } : i));
+      } else {
+        const r = await eventService.like(ev.id);
+        setEvents(p => p.map(i => i.id === ev.id ? { ...i, like_count: r.likeCount ?? i.like_count + 1, user_liked: true } : i));
+      }
     } catch (_) {}
   };
 
@@ -816,6 +823,19 @@ function BarDetailView() {
               </div>
             )}
 
+            {cartTable && (acceptGcash || acceptOnline) && grandTotal > 0 && (
+              <div className="cart-total-box" style={{ marginTop: '0.75rem' }}>
+                <div className="cart-total-row">
+                  <span>Total estimated bill</span>
+                  <span>₱{grandTotal.toFixed(2)}</span>
+                </div>
+                <div className="cart-grand-total">
+                  <span>Required down payment (50%)</span>
+                  <span>₱{(grandTotal * 0.5).toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+
             {/* Payment Method */}
             {cartTable && (acceptGcash || acceptOnline) && (
               <div className="cart-section">
@@ -854,7 +874,7 @@ function BarDetailView() {
                 ? 'Processing...'
                 : !cartTable
                   ? 'Select a Table to Checkout'
-                  : `Checkout — ₱${grandTotal.toFixed(2)}`}
+                  : `Pay Down Payment — ₱${(grandTotal * 0.5).toFixed(2)}`}
             </button>
 
             {!cartTable && (
@@ -972,10 +992,18 @@ function BarDetailView() {
                     </span>
                     <button 
                       className="btn btn-ghost btn-sm" 
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }} 
+                      style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '0.4rem',
+                        background: ev.user_liked ? 'rgba(220, 38, 38, 0.15)' : undefined,
+                        color: ev.user_liked ? '#f87171' : undefined,
+                        border: ev.user_liked ? '1px solid rgba(220, 38, 38, 0.3)' : undefined
+                      }} 
                       onClick={() => handleLikeEvent(ev)}
                     >
-                      <Heart size={14} /> Like Event
+                      <Heart size={14} fill={ev.user_liked ? '#f87171' : 'none'} stroke={ev.user_liked ? '#f87171' : 'currentColor'} />
+                      {ev.user_liked ? 'Unlike' : 'Like Event'}
                     </button>
                   </div>
                 </div>

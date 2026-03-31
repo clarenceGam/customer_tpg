@@ -119,6 +119,7 @@ function ReservationsView() {
   const [msg, setMsg] = useState('');
   const [selected, setSelected] = useState(null);
   const [recheckingId, setRecheckingId] = useState(null);
+  const [nowTs, setNowTs] = useState(Date.now());
 
   const load = async () => {
     try {
@@ -146,6 +147,10 @@ function ReservationsView() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleCancel = async (id) => {
     if (!confirm('Cancel this reservation?')) return;
@@ -171,6 +176,17 @@ function ReservationsView() {
       setErr(e?.response?.data?.message || 'Failed to recheck status.');
     } finally {
       setRecheckingId(null);
+    }
+  };
+
+  const handleCheckIn = async (id) => {
+    setErr(''); setMsg('');
+    try {
+      const result = await reservationService.checkIn(id);
+      setMsg(result.message || 'Checked in successfully.');
+      load();
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'Failed to check in.');
     }
   };
 
@@ -201,20 +217,31 @@ function ReservationsView() {
           {reservations.map(r => {
             const isPaid = (r.payment_status || '').toLowerCase() === 'paid';
             const isConfirmed = (r.status || '').toLowerCase() === 'confirmed';
+            const isCheckedIn = (r.status || '').toLowerCase() === 'checked_in';
+            const isNoShow = (r.status || '').toLowerCase() === 'no_show';
             const isApproved = (r.status || '').toLowerCase() === 'approved';
             const isCancelled = (r.status || '').toLowerCase().includes('cancel');
             const isRejected = (r.status || '').toLowerCase() === 'rejected';
 
-            const badgeClass = isPaid || isConfirmed ? 'paid'
+            const badgeClass = isPaid || isConfirmed || isCheckedIn ? 'paid'
               : isCancelled || isRejected ? 'cancelled'
+              : isNoShow ? 'cancelled'
               : isApproved ? 'approved'
               : 'pending';
 
-            const badgeLabel = isPaid || isConfirmed ? 'Reserved'
+            const badgeLabel = isPaid || isConfirmed || isCheckedIn ? 'Reserved'
               : isCancelled ? 'Cancelled'
               : isRejected ? 'Rejected'
+              : isNoShow ? 'No Show'
               : isApproved ? 'Approved'
               : 'Pending';
+
+            const startDt = new Date(`${r.reservation_date}T${r.reservation_time}`);
+            const graceEnd = new Date(startDt.getTime() + 30 * 60 * 1000);
+            const inGraceWindow = isConfirmed && !r.checked_in_at && nowTs >= startDt.getTime() && nowTs < graceEnd.getTime();
+            const remainingMs = inGraceWindow ? Math.max(0, graceEnd.getTime() - nowTs) : 0;
+            const remMin = Math.floor(remainingMs / 60000);
+            const remSec = Math.floor((remainingMs % 60000) / 1000);
 
             return (
               <div
@@ -238,6 +265,19 @@ function ReservationsView() {
                   <span className="text-body" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><CalendarDays size={13} /> {formatDate(r.reservation_date)}</span>
                   <span className="text-body" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><Clock size={13} /> {formatTime(r.reservation_time)}</span>
                 </div>
+                {inGraceWindow && (
+                  <div className="alert alert-info mt-sm" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.85rem' }}>
+                      Grace period: <strong>{String(remMin).padStart(2, '0')}:{String(remSec).padStart(2, '0')}</strong> remaining
+                    </span>
+                    <button
+                      className="btn btn-red btn-sm"
+                      onClick={(e) => { e.stopPropagation(); handleCheckIn(r.id); }}
+                    >
+                      Check In
+                    </button>
+                  </div>
+                )}
                 {r.transaction_number && (
                   <p className="text-muted mt-sm" style={{ fontSize: '0.72rem', fontFamily: 'monospace' }}>#{r.transaction_number}</p>
                 )}

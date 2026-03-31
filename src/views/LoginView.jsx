@@ -162,6 +162,8 @@ function LoginView() {
       if (code === 'EMAIL_NOT_VERIFIED') {
         setUnverifiedEmail(err?.email || email);
         setAuthError(err.message);
+      } else if (code === 'GOOGLE_ACCOUNT') {
+        setAuthError(err.message);
       } else if (status === 401) {
         setAuthError('Invalid email or password.');
       } else if (code === 'MAINTENANCE_MODE') {

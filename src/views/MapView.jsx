@@ -404,7 +404,7 @@ function MapView() {
                 <Sparkles size={14} style={{ color: '#fbbf24' }} />
                 DSS Recommendations
                 <span style={{ fontSize: '0.7rem', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', padding: '0.15rem 0.4rem', borderRadius: '999px', border: '1px solid rgba(251,191,36,0.3)' }}>
-                  {nearbyCount} nearby
+                  {dssRecs.length} found
                 </span>
               </span>
               {dssOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

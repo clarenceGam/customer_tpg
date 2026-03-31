@@ -173,7 +173,7 @@ function LandingPage() {
 
             <div className="footer-col">
               <h4>Contact</h4>
-              <p>Email: info@thepartygoersph.com</p>
+              <p>Email: thepartygoers3@gmail.com</p>
               <p>Cavite, Philippines</p>
             </div>
           </div>

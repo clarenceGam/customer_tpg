@@ -156,11 +156,31 @@ function PaymentSuccessView() {
               </div>
             )}
 
-            <div className="detail-row mt-md" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem' }}>
-              <span>Total Paid</span>
+            {payment.total_order_amount > 0 && (
+              <div className="detail-row mt-md" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem' }}>
+                <span>Total Order</span>
+                <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>₱{Number(payment.total_order_amount).toFixed(2)}</strong>
+              </div>
+            )}
+
+            <div className={`detail-row${!payment.total_order_amount ? ' mt-md' : ''}`} style={!payment.total_order_amount ? { borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem' } : {}}>
+              <span>{payment.remaining_balance > 0 ? 'Down Payment Paid' : 'Total Paid'}</span>
               <strong style={{ fontSize: '1.2rem', color: '#dc2626' }}>₱{Number(payment.amount || 0).toFixed(2)}</strong>
             </div>
-            
+
+            {payment.remaining_balance > 0 && (
+              <div className="detail-row" style={{ background: 'rgba(251,191,36,0.08)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', marginTop: '0.25rem' }}>
+                <span style={{ color: '#fbbf24', fontWeight: 600 }}>Remaining Balance</span>
+                <strong style={{ fontSize: '1rem', color: '#fbbf24' }}>₱{Number(payment.remaining_balance).toFixed(2)}</strong>
+              </div>
+            )}
+
+            {payment.remaining_balance > 0 && (
+              <p style={{ fontSize: '0.75rem', color: '#888', textAlign: 'center', marginTop: '0.25rem' }}>
+                Remaining balance will be collected in person at the bar.
+              </p>
+            )}
+
             <div className="detail-row">
               <span>Payment Method</span>
               <strong>{(payment.payment_method || '').toUpperCase()}</strong>

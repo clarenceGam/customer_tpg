@@ -20,4 +20,9 @@ export const reservationService = {
     const response = await reservationApi.recheckPayment(reservationId);
     return response.data;
   },
+
+  async checkIn(reservationId) {
+    const response = await reservationApi.checkIn(reservationId);
+    return response.data;
+  },
 };

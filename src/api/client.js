@@ -31,7 +31,8 @@ apiClient.interceptors.response.use(
   (error) => {
     const url = error.config?.url || '';
     const skipLogout = SKIP_LOGOUT_URLS.some((path) => url.includes(path));
-    if (error.response?.status === 401 && !skipLogout && typeof onUnauthorized === 'function') {
+    const hasToken = !!localStorage.getItem('token');
+    if (error.response?.status === 401 && !skipLogout && hasToken && typeof onUnauthorized === 'function') {
       onUnauthorized();
     }
     return Promise.reject(error);

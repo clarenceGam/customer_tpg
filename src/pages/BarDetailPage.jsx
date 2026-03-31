@@ -137,7 +137,8 @@ function BarDetailPage() {
       const reservationId = result?.data?.id;
 
       if (payment_method !== 'cash' && reservationId && bar) {
-        const depositAmount = Number(bar.minimum_reservation_deposit) || 0;
+        const estimatedTotal = Number(payload?.estimated_total_amount || 0);
+        const depositAmount = estimatedTotal > 0 ? Number((estimatedTotal * 0.5).toFixed(2)) : (Number(bar.minimum_reservation_deposit) || 0);
         if (depositAmount > 0) {
           try {
             const paymentResult = await paymentService.createPayment({
