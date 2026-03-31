@@ -32,21 +32,33 @@ function PaymentSuccessView() {
       window.history.replaceState({}, '', '/');
 
       try {
-        await paymentService.confirmPaymentByReference(referenceId);
-      } catch (_) {
-        // fallback to read-only status if confirm cannot be resolved yet
-      }
+        let details = null;
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          let confirmResult = null;
+          try {
+            confirmResult = await paymentService.confirmPaymentByReference(referenceId);
+          } catch (_) {}
 
-      try {
-        const details = await paymentService.getPaymentByReference(referenceId);
+          try {
+            details = await paymentService.getPaymentByReference(referenceId);
+          } catch (_) {}
+
+          const effectiveStatus = String(confirmResult?.status || details?.status || '').toLowerCase();
+          if (effectiveStatus === 'paid' || effectiveStatus === 'cancelled') {
+            break;
+          }
+
+          if (attempt < 5) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        }
+
         if (!cancelled) {
           setPayment(details);
-          // BUG 5: Clear cart after confirmed successful payment
-          if (details?.status === 'paid') {
+          if ((details?.status || '').toLowerCase() === 'paid') {
             localStorage.removeItem(CART_STORAGE_KEY);
           }
         }
-      } catch (_) {
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -58,8 +70,10 @@ function PaymentSuccessView() {
     };
   }, [referenceId, navigate]);
 
+  const currentStatus = String(payment?.status || '').toLowerCase();
+
   useEffect(() => {
-    if (loading) return;
+    if (loading || currentStatus !== 'paid') return;
     countdownRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
@@ -71,7 +85,7 @@ function PaymentSuccessView() {
       });
     }, 1000);
     return () => clearInterval(countdownRef.current);
-  }, [loading, navigate]);
+  }, [loading, navigate, currentStatus]);
 
   if (loading) {
     return (
@@ -102,9 +116,11 @@ function PaymentSuccessView() {
   return (
     <div className="result-page">
       <div className="glass-card result-card">
-        <div className="result-icon"><CheckCircle size={52} strokeWidth={1.5} style={{ color: '#22c55e' }} /></div>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(1.4rem, 3vw, 1.8rem)', fontWeight: 800, lineHeight: 1.1, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>PAYMENT <span style={{ color: 'var(--color-red-primary)' }}>CONFIRMED</span></h1>
-        <p className="text-muted mt-sm">Your payment has been processed successfully.</p>
+        <div className="result-icon"><CheckCircle size={52} strokeWidth={1.5} style={{ color: currentStatus === 'cancelled' ? '#f59e0b' : currentStatus === 'paid' ? '#22c55e' : '#fbbf24' }} /></div>
+        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(1.4rem, 3vw, 1.8rem)', fontWeight: 800, lineHeight: 1.1, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+          PAYMENT <span style={{ color: 'var(--color-red-primary)' }}>{currentStatus === 'paid' ? 'CONFIRMED' : currentStatus === 'cancelled' ? 'CANCELLED' : 'PROCESSING'}</span>
+        </h1>
+        <p className="text-muted mt-sm">{currentStatus === 'paid' ? 'Your payment has been processed successfully.' : currentStatus === 'cancelled' ? 'Your payment was cancelled.' : 'We are still verifying your payment with PayMongo.'}</p>
 
         {payment && (
           <div className="result-details">
@@ -188,9 +204,11 @@ function PaymentSuccessView() {
           </div>
         )}
 
-        <p className="text-muted" style={{ fontSize: '0.78rem', marginTop: '1rem' }}>
-          Redirecting to reservations in <strong style={{ color: '#22c55e' }}>{countdown}s</strong>…
-        </p>
+        {currentStatus === 'paid' && (
+          <p className="text-muted" style={{ fontSize: '0.78rem', marginTop: '1rem' }}>
+            Redirecting to reservations in <strong style={{ color: '#22c55e' }}>{countdown}s</strong>…
+          </p>
+        )}
         <div className="flex gap-md justify-center mt-sm">
           <button className="btn btn-red" onClick={() => { clearInterval(countdownRef.current); navigate(VIEWS.RESERVATIONS); }}>
             View My Reservations

@@ -35,9 +35,25 @@ function parseItemizedOrder(notes) {
   return result;
 }
 
+async function settlePayment(referenceId, attempts = 5, delayMs = 1500) {
+  let lastResult = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      lastResult = await paymentService.confirmPaymentByReference(referenceId);
+      const status = String(lastResult?.status || '').toLowerCase();
+      if (status === 'paid' || status === 'cancelled') return lastResult;
+    } catch (_) {}
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return lastResult;
+}
+
 function getPaymentStatus(payment) {
   const status = (payment.status || '').toLowerCase();
   const paymentStatus = (payment.payment_status || '').toLowerCase();
+  const reservationPaymentStatus = (payment.reservation_payment_status || '').toLowerCase();
   const reservationStatus = (payment.reservation_status || '').toLowerCase();
   const orderStatus = (payment.order_status || '').toLowerCase();
   
@@ -47,6 +63,13 @@ function getPaymentStatus(payment) {
   }
   if (payment.payment_type === 'order' && orderStatus === 'cancelled') {
     return 'cancelled';
+  }
+  
+  if (
+    payment.payment_type === 'reservation' &&
+    (reservationPaymentStatus === 'partial' || Number(payment.remaining_balance || 0) > 0)
+  ) {
+    return 'partial';
   }
   
   if (status === 'paid' || status === 'completed' || status === 'success' || paymentStatus === 'paid' || paymentStatus === 'completed') {
@@ -83,7 +106,7 @@ function PaymentDetailModal({ payment, onClose }) {
         <div className="modal-body flex flex-col gap-md">
           <div className="flex gap-sm items-center flex-wrap">
             <span className={`payment-status ${status}`}>
-              {status === 'paid' ? 'Paid' : status === 'cancelled' ? 'Cancelled' : status === 'failed' ? 'Failed' : 'Pending'}
+              {status === 'paid' ? 'Paid' : status === 'partial' ? 'Partially Paid' : status === 'cancelled' ? 'Cancelled' : status === 'failed' ? 'Failed' : 'Pending'}
             </span>
             {payment.bar_name && <span className="badge-glass">{payment.bar_name}</span>}
           </div>
@@ -232,7 +255,7 @@ function PaymentsView() {
       // Auto-check any pending payments against PayMongo
       const pending = list.filter(p => (p.status || '').toLowerCase() === 'pending' && p.reference_id);
       if (pending.length) {
-        await Promise.allSettled(pending.map(p => paymentService.confirmPaymentByReference(p.reference_id)));
+        await Promise.allSettled(pending.map(p => settlePayment(p.reference_id)));
         // Refresh list after checks
         const updated = await paymentService.myHistory();
         setPayments(Array.isArray(updated) ? updated : list);
@@ -309,8 +332,8 @@ function PaymentsView() {
                     <div className="phc-amount">₱{Number(p.amount || 0).toFixed(2)}</div>
                   </div>
                   <div className="phc-right">
-                    <span className={`payment-status ${status}`}>
-                      {status === 'paid' ? 'Paid' : status === 'cancelled' ? 'Cancelled' : status === 'failed' ? 'Failed' : 'Pending'}
+                    <span className={`payment-status ${status === 'partial' ? 'approved' : status}`}>
+                      {status === 'paid' ? 'Paid' : status === 'partial' ? 'Partially Paid' : status === 'cancelled' ? 'Cancelled' : status === 'failed' ? 'Failed' : 'Pending'}
                     </span>
                     <div className="phc-meta">{p.payment_method?.toUpperCase() || '—'}</div>
                   </div>

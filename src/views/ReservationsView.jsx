@@ -117,6 +117,21 @@ function downloadReceiptPdf(receipt) {
   URL.revokeObjectURL(objectUrl);
 }
 
+async function settleReservationPayment(referenceId, attempts = 5, delayMs = 1500) {
+  let lastResult = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      lastResult = await paymentService.confirmPaymentByReference(referenceId);
+      const status = String(lastResult?.status || '').toLowerCase();
+      if (status === 'paid' || status === 'cancelled') return lastResult;
+    } catch (_) {}
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return lastResult;
+}
+
 function ReservationModal({ reservation, onClose, onCancel, onDownloadReceipt }) {
   if (!reservation) return null;
   const items = parseOrderItems(reservation.notes || '');
@@ -257,7 +272,7 @@ function ReservationsView() {
         )
         .map(r => r.reference_id);
       if (pendingRefs.length) {
-        await Promise.allSettled(pendingRefs.map(ref => paymentService.confirmPaymentByReference(ref)));
+        await Promise.allSettled(pendingRefs.map(ref => settleReservationPayment(ref)));
         const refreshed = await reservationService.myReservations();
         setReservations(Array.isArray(refreshed) ? refreshed : list);
       }
