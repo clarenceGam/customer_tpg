@@ -134,8 +134,9 @@ function ReservationModal({ reservation, onClose, onCancel, onDownloadReceipt })
     : isApproved ? 'approved'
     : 'pending';
 
-  const badgeLabel = (isPaid || isConfirmed) ? 'Reserved'
-    : isPartialPaid ? 'Down Paid'
+  const badgeLabel = isPaid ? 'Paid'
+    : isPartialPaid ? 'Partially Paid'
+    : isConfirmed ? 'Confirmed'
     : isCancelled ? 'Cancelled'
     : isRejected ? 'Rejected'
     : isNoShow ? 'No Show'
@@ -392,8 +393,9 @@ function ReservationsView() {
               : isApproved ? 'approved'
               : 'pending';
 
-            const badgeLabel = (isPaid || isConfirmed || isCheckedIn) ? 'Reserved'
-              : isPartialPaid ? 'Down Paid'
+            const badgeLabel = isPaid ? 'Paid'
+              : isPartialPaid ? 'Partially Paid'
+              : (isConfirmed || isCheckedIn) ? 'Confirmed'
               : isCancelled ? 'Cancelled'
               : isRejected ? 'Rejected'
               : isNoShow ? 'No Show'
