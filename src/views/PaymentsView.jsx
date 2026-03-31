@@ -168,10 +168,29 @@ function PaymentDetailModal({ payment, onClose }) {
                 <span>₱{item.price.toFixed(2)}</span>
               </div>
             ))}
-            <div className="cart-grand-total">
-              <span>Total Amount</span>
-              <span>₱{(grandTotal > 0 ? grandTotal : Number(payment.amount || 0)).toFixed(2)}</span>
-            </div>
+            {payment.total_order_amount > 0 ? (
+              <>
+                <div className="cart-total-row">
+                  <span>Total Order</span>
+                  <span>₱{Number(payment.total_order_amount).toFixed(2)}</span>
+                </div>
+                <div className="cart-grand-total">
+                  <span>Down Payment Paid</span>
+                  <span>₱{Number(payment.amount || 0).toFixed(2)}</span>
+                </div>
+                {payment.remaining_balance > 0 && (
+                  <div className="cart-total-row" style={{ color: '#fbbf24', fontWeight: 600 }}>
+                    <span>Remaining Balance (collect in person)</span>
+                    <span>₱{Number(payment.remaining_balance).toFixed(2)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="cart-grand-total">
+                <span>Total Amount</span>
+                <span>₱{(grandTotal > 0 ? grandTotal : Number(payment.amount || 0)).toFixed(2)}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
