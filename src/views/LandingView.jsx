@@ -13,9 +13,9 @@ function LandingView() {
 
   // Background images for slideshow
   const heroImages = [
-    '../dist/bg.png',
-    '../dist/bar2.jpg', // Add more images as needed
-    '../dist/bg3.png',
+    '/bg.png',
+    '/bar2.jpg', // Add more images as needed
+    '/bg3.png',
   ];
 
   useEffect(() => {
